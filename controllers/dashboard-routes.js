@@ -2,48 +2,45 @@ const router = require('express').Router();
 const { Post, Comment, User } = require('../models/');
 
 // get all posts for homepage
-router.get('/', async (req, res) => {
+router.get('/', withAuth, async (req, res) => {
   try {
-    // we need to get all Posts and include the User for each (change lines 8 and 9)
-    const postData = await SomeModel.someSequelizeMethod({
-      include: [SomeOtherModel],
-    });
-    // serialize the data
+    const postData = await Post.findAll({ where: { userId: req.session.userId }});
     const posts = postData.map((post) => post.get({ plain: true }));
-    // we should render all the posts here
-    res.render('hmmmm what view should we render?', { posts });
+
+    res.render('all-posts-admin', {
+    // rendering with a different layout than main
+      layout: 'dashboard',
+      posts,
+    });
   } catch (err) {
-    res.status(500).json(err);
+    res.redirect('login');
   }
 });
 
 // get single post
-router.get('/post/:id', async (req, res) => {
+router.get('/edit/:id', withAuth, async (req, res) => {
   try {
-    // what should we pass here? we need to get some data passed via the request body (something.something.id?)
-    // change the model below, but not the findByPk method.
-    const postData = await SomeModel.findByPk(????, {
-      // helping you out with the include here, no changes necessary
-      include: [
-        User,
-        {
-          model: Comment,
-          include: [User],
-        },
-      ],
-    });
-
+    const postData = await Post.findByPk(req.params.id);
     if (postData) {
-      // serialize the data
       const post = postData.get({ plain: true });
-      // which view should we render for a single-post?
-      res.render('hmmmm what view should we render?', { post });
+      res.render('edit-post', {
+      // rendering with a different layout than main
+        layout: 'dashboard',
+        post,
+      });
     } else {
       res.status(404).end();
     }
   } catch (err) {
-    res.status(500).json(err);
+    res.redirect('login');
   }
+});
+
+// get route for new post
+router.get("/new", withAuth, (req, res) => {
+  res.render("new-post", {
+    layout: "dashboard",
+  });
 });
 
 // giving you the login and signup route pieces below, no changes needed.
